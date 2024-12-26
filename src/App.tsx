@@ -1,10 +1,7 @@
-import automergeLogo from '/automerge.png'
-import '@picocss/pico/css/pico.min.css'
-import './App.css'
-import { useDocument } from '@automerge/automerge-repo-react-hooks'
-import { updateText } from '@automerge/automerge/next'
-import type { AutomergeUrl } from '@automerge/automerge-repo'
-
+import automergeLogo from "/automerge.png";
+import "@picocss/pico/css/pico.min.css";
+import "./App.css";
+import { useState } from "react";
 
 export interface Task {
   title: string;
@@ -15,68 +12,78 @@ export interface TaskList {
   tasks: Task[];
 }
 
-
-function App({ docUrl }: { docUrl: AutomergeUrl }) {
-
-  const [doc, changeDoc] = useDocument<TaskList>(docUrl)
+function App() {
+  const [doc, setDoc] = useState<TaskList>({ tasks: [] });
 
   return (
     <>
       <header>
-          <a href="https://automerge.org" target="_blank">
-            <img src={automergeLogo} className="logo" alt="Automerge logo" />
-          </a>
-        <h1>
-          Automerge Task List
-        </h1>
+        <a href="https://automerge.org" target="_blank">
+          <img src={automergeLogo} className="logo" alt="Automerge logo" />
+        </a>
+        <h1>Automerge Task List</h1>
       </header>
 
-
-      <button type="button" onClick={() => {
-        changeDoc(d =>
-          d.tasks.unshift({
-            title: '',
-            done: false
-          })
-        );
-      }}>
+      <button
+        type="button"
+        onClick={() =>
+          setDoc((d) => ({
+            tasks: [
+              {
+                title: "",
+                done: false,
+              },
+              ...d.tasks,
+            ],
+          }))
+        }
+      >
         <b>+</b> New task
       </button>
 
-      <div id='task-list'>
+      <div id="task-list">
+        {doc &&
+          doc.tasks?.map(({ title, done }, index) => (
+            <div className="task" key={index}>
+              <input
+                type="checkbox"
+                checked={done}
+                onChange={() =>
+                  setDoc((d) => {
+                    const newTasks = [...d.tasks];
+                    newTasks[index] = { ...newTasks[index], done: !done };
+                    return { tasks: newTasks };
+                  })
+                }
+              />
 
-      {doc && doc.tasks?.map(({ title, done }, index) =>
-        <div className='task' key={index}>
-          <input
-            type="checkbox"
-            checked={done}
-            onChange={() => changeDoc(d => {
-              d.tasks[index].done = !d.tasks[index].done;
-            })}
-          />
-
-          <input type="text"
-            placeholder='What needs doing?' value={title || ''}
-            onChange={(e) => changeDoc(d => {
-              // Use Automerge's updateText for efficient multiplayer edits
-              // (as opposed to replacing the whole title on each edit)
-              updateText(d.tasks[index], ['title'], e.target.value)
-            })}
-            style={done ? {textDecoration: 'line-through'}: {}}
-          />
-        </div>)
-      }
-
+              <input
+                type="text"
+                placeholder="What needs doing?"
+                value={title || ""}
+                onChange={(e) =>
+                  setDoc((d) => {
+                    const newTasks = [...d.tasks];
+                    newTasks[index] = {
+                      ...newTasks[index],
+                      title: e.target.value,
+                    };
+                    return { tasks: newTasks };
+                  })
+                }
+                style={done ? { textDecoration: "line-through" } : {}}
+              />
+            </div>
+          ))}
       </div>
 
-
-
       <footer>
-        <p className="read-the-docs">Powered by Automerge + Vite + React + TypeScript
+        <p className="read-the-docs">
+          Powered by Automerge + Vite + React + TypeScript
         </p>
       </footer>
     </>
-  )
+  );
 }
 
-export default App
+export default App;
